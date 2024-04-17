@@ -1,5 +1,14 @@
-﻿@inject NavigationManager navManager
+﻿@using BlogUI.Services;
+@using BlogUI.Models;
+@using Blazored.LocalStorage;
+@using BlogUI.Extensions;
+
 @inherits LayoutComponentBase
+
+@inject Common common
+@inject ILocalStorageService localStorage
+@inject NavigationManager navManager
+@inject IJSRuntime jsruntime
 
 <div class="page">
     <div class="sidebar">
@@ -7,13 +16,25 @@
     </div>
 
     <main>
-        <div class="top-row px-4 d-flex justify-content-end gap-4">
-            <div>
-                <NavLink class="p-1" href="/login">Login</NavLink>
-            </div>
-            <div>
-                <NavLink class="p-1" href="/register">Register</NavLink>
-            </div>
+        <div class="top-row px-4" style="display: flex; justify-content: flex-end; gap: 1rem; background-image: linear-gradient(270deg, rgb(245, 245, 240) 0%, #fff2a0 90%); padding: 1rem;">
+            @if (userContext.userId > 0)
+            {
+                <div>
+                    @userContext.firstName @userContext.lastName
+                </div>
+                <div style="margin-right: 1rem;">
+                    <button class="p-1" @onclick="LogOut" style="color: #000; text-decoration: none; border: none; padding: 12px 20px; border-radius: 5px; background-color: #fff2a0; transition: background-color 0.3s; font-weight: bold; display: inline-block;">Log Out</button>
+                </div>
+            }
+            else
+            {
+                <div style="margin-right: 1rem;">
+                    <button class="p-1" @onclick="NavigateToLogin" style="color: #000; text-decoration: none; border: none; padding: 12px 20px; border-radius: 5px; background-color: #fff2a0; transition: background-color 0.3s; font-weight: bold; display: inline-block;">Login</button>
+                </div>
+                <div>
+                    <button class="p-1" @onclick="NavigateToRegister" style="color: #000; text-decoration: none; border: none; padding: 12px 20px; border-radius: 5px; background-color: #fff2a0; transition: background-color 0.3s; font-weight: bold; display: inline-block;">Register</button>
+                </div>
+            }
         </div>
 
         <article class="content px-4">
@@ -30,6 +51,27 @@
 
 @code
 {
+    private UserContext userContext = new UserContext();
+
+    protected override async Task OnInitializedAsync()
+    {
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            userContext = await common.GetUserContext();
+            StateHasChanged();
+        }
+    }
+
+    public async Task LogOut()
+    {
+        await localStorage.RemoveItemAsync("userContext");
+        navManager.NavigateTo("/",forceLoad: true);
+    }
+
     public void NavigateToLogin()
     {
         navManager.NavigateTo("/login");

@@ -67,10 +67,26 @@ namespace BlogUI.Models
         public string? ConfirmPassword { get; set; }
     }
 
-    public partial class ForgotPassword
+    public partial class ForgotPasswordModel
     {
         [Required]
         [EmailAddress(ErrorMessage = "Invalid email address")]
         public string Email { get; set; }
+    }
+
+    public class ResetPasswordModel
+    {
+        public string? TokenId { get; set; }
+
+        [Required]
+        [DataType(DataType.Password)]
+        [RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#^&()_+=-])[A-Za-z\d@$!%*?&#^&()_+=-]{8,}$",
+        ErrorMessage = "Password must be at least 8 characters long and contain at least one lowercase letter, one uppercase letter, one digit, and one special character.")]
+        public string? password { get; set; }
+
+        [Required]
+        [DataType(DataType.Password)]
+        [Compare("password", ErrorMessage = "The password and confirmation password do not match.")]
+        public string? ConfirmPassword { get; set; }
     }
 }

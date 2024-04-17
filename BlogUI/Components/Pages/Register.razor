@@ -1,6 +1,5 @@
 ﻿@page "/register"
 
-
 @using BlogUI.Models; 
 @using BlogUI.Services;
 @using BlogUI.Enums;
@@ -9,10 +8,11 @@
 @using Blazored.Toast.Services;
 @using System.Globalization;
 @using System.ComponentModel.DataAnnotations;
+@using BlogUI.Extensions;
 
 @inject Microsoft.Extensions.Configuration.IConfiguration config
 @inject NavigationManager NavManager
-@inject IToastService toastService
+@inject IJSRuntime jsruntime
 
 <style>
     .form-container {
@@ -174,15 +174,12 @@
 
         if (responseModel.isSuccess == true)
         {
-            toastService.ShowError("User Created Successfully!!!");
+            jsruntime.ToastrSuccess("User Created Successfully!!!");
             NavManager.NavigateTo("/login");
         }
         else
         {
-            // if (sessionDetails.message != "")
-            // {
-                toastService.ShowError(responseModel.message);
-            // }
+            jsruntime.ToastrError(responseModel.message);
         }
     }
 }

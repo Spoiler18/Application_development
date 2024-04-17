@@ -10,11 +10,12 @@
 @using System.Globalization;
 @using System.ComponentModel.DataAnnotations;
 @using Microsoft.AspNetCore.Mvc.TagHelpers;
+@using BlogUI.Extensions;
 
 @inject Microsoft.Extensions.Configuration.IConfiguration config
 @inject NavigationManager NavManager
 @inject ILocalStorageService localStorage 
-@inject IToastService toastService
+@inject IJSRuntime jsruntime
 @inject Common common
 
 <style>
@@ -107,6 +108,7 @@
 
     private void ForgotPassword()
     {
+        NavManager.NavigateTo("/forgotpassword");
     }
 
     private async Task HandleValidSubmit()
@@ -132,14 +134,12 @@
         if (!string.IsNullOrEmpty(userContext?.tokenId))
         {
             await localStorage.SetItemAsync("userContext", userContext);
-            NavManager.NavigateTo("/");
+            jsruntime.ToastrSuccess("Login Successful");
+            NavManager.NavigateTo("/",forceLoad: true);
         }
         else
         {
-            if (userContext.message != "")
-            {
-                toastService.ShowError(userContext.message);
-            }
+            jsruntime.ToastrError(userContext.message);
         }
     }
 }

@@ -3,6 +3,7 @@ using Blazored.Modal;
 using Blazored.Toast;
 using BlogUI.Components;
 using BlogUI.Services;
+using Microsoft.JSInterop;
 
 var builder = WebApplication.CreateBuilder(args);
 
