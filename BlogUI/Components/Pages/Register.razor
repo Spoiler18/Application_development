@@ -1,0 +1,188 @@
+﻿@page "/register"
+
+
+@using BlogUI.Models; 
+@using BlogUI.Services;
+@using BlogUI.Enums;
+@using System.Text.Json;
+@using System.Text;
+@using Blazored.Toast.Services;
+@using System.Globalization;
+@using System.ComponentModel.DataAnnotations;
+
+@inject Microsoft.Extensions.Configuration.IConfiguration config
+@inject NavigationManager NavManager
+@inject IToastService toastService
+
+<style>
+    .form-container {
+        height: calc(100vh - 3.5rem);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        overflow: hidden;
+    }
+
+    .form-box {
+        width: 550px; /* Increased width to accommodate two columns */
+        padding: 30px;
+        background-color: #ffd;
+        border-radius: 10px;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 12px 20px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        font-size: 16px;
+    }
+
+    .btn-link {
+        color: #666;
+        font-size: 14px;
+        text-decoration: none;
+    }
+
+    .btn-link:hover {
+        text-decoration: underline;
+    }
+
+</style>
+
+<EditForm Model="userDetail" FormName="UserRegister" OnValidSubmit="@HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <div class="form-container">
+        <div class="form-box">
+            <h1 class="login-header">User Register</h1>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="firstName">First Name</label>
+                        <InputText class="form-control" type="text" id="firstName" @bind-Value="userDetail.firstName" placeholder="Enter first name" />
+                        <ValidationMessage For="@(() => userDetail.firstName)" />
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="lastName">Last Name</label>
+                        <InputText class="form-control" type="text" id="lastName" @bind-Value="userDetail.lastName" placeholder="Enter last name" />
+                        <ValidationMessage For="@(() => userDetail.lastName)" />
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <InputText type="email" class="form-control" id="email" @bind-Value="userDetail.email" placeholder="Enter email" />
+                        <ValidationMessage For="@(() => userDetail.email)" />
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <InputText type="password" class="form-control" id="password" @bind-Value="userDetail.password" placeholder="Enter password" />
+                        <ValidationMessage For="@(() => userDetail.password)" />
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="dateOfBirth">Date of Birth</label>
+                        <InputDate class="form-control" id="dateOfBirth" @bind-Value="userDetail.dateOfBirth" />
+                        <ValidationMessage For="@(() => userDetail.dateOfBirth)" />
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label>Gender</label>
+                        <div>
+                            <label>
+                                <InputRadioGroup @bind-Value="userDetail.gender">
+                                    <InputRadio Value="0" />
+                                    Male
+                                </InputRadioGroup>
+                            </label>
+                        </div>
+                        <div>
+                            <label>
+                                <InputRadioGroup @bind-Value="userDetail.gender">
+                                    <InputRadio Value="1" />
+                                    Female
+                                </InputRadioGroup>
+                            </label>
+                        </div>
+                        <ValidationMessage For="@(() => userDetail.gender)" />
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    @* <div class="form-group">
+                        <label for="password">Password</label>
+                        <InputText type="password" class="form-control" id="password" @bind-Value="userDetail.Password" placeholder="Password" />
+                        <ValidationMessage For="@(() => userDetail.Password)" />
+                    </div> *@
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary">Register</button>
+        </div>
+    </div>
+</EditForm>
+
+@code {
+    [SupplyParameterFromForm]
+    private UserDetails userDetail { get; set; } = new UserDetails();
+
+
+    protected override async Task OnInitializedAsync()
+    {
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        HttpClient httpClient = new HttpClient();
+        var requestUrl = config["APIBaseUrl"] + "account/register";
+
+        using StringContent jsonContent = new(
+        JsonSerializer.Serialize(new
+        {
+            FirstName = userDetail.firstName,
+            LastName = userDetail.lastName,
+            IsAdmin = userDetail.isAdmin,
+            Password = userDetail.password,
+            Email = userDetail.email,
+            DateOfBirth = userDetail.dateOfBirth,
+            Gender = userDetail.gender,
+            ContactNumber = userDetail.contactNumber
+        }),
+        Encoding.UTF8,
+        "application/json");
+
+        HttpResponseMessage response = await httpClient.PostAsync(requestUrl, jsonContent);
+        httpClient.Dispose();
+
+        using var responseStream = await response.Content.ReadAsStreamAsync();
+        ResponseModel responseModel = await JsonSerializer.DeserializeAsync<ResponseModel>(responseStream);
+
+        if (responseModel.isSuccess == true)
+        {
+            toastService.ShowError("User Created Successfully!!!");
+            NavManager.NavigateTo("/login");
+        }
+        else
+        {
+            // if (sessionDetails.message != "")
+            // {
+                toastService.ShowError(responseModel.message);
+            // }
+        }
+    }
+}

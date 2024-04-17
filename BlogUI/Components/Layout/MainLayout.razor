@@ -1,0 +1,42 @@
+﻿@inject NavigationManager navManager
+@inherits LayoutComponentBase
+
+<div class="page">
+    <div class="sidebar">
+        <NavMenu />
+    </div>
+
+    <main>
+        <div class="top-row px-4 d-flex justify-content-end gap-4">
+            <div>
+                <NavLink class="p-1" href="/login">Login</NavLink>
+            </div>
+            <div>
+                <NavLink class="p-1" href="/register">Register</NavLink>
+            </div>
+        </div>
+
+        <article class="content px-4">
+            @Body
+        </article>
+    </main>
+</div>
+
+<div id="blazor-error-ui">
+    An unhandled error has occurred.
+    <a href="" class="reload">Reload</a>
+    <a class="dismiss">🗙</a>
+</div>
+
+@code
+{
+    public void NavigateToLogin()
+    {
+        navManager.NavigateTo("/login");
+    }
+
+    public void NavigateToRegister()
+    {
+        navManager.NavigateTo("/register");
+    }
+}
