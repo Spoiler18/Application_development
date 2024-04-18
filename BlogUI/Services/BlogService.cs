@@ -15,7 +15,7 @@ namespace BlogUI.Services
             this.configuration = configuration;
         }
 
-        public async Task<IEnumerable<Blog>> GetWeatherDetails()
+        public async Task<IEnumerable<Blog>> GetBlogList()
         {
             var requestUrl = configuration["APIBaseUrl"] + "Blog/GetBlogsList";
             var responseStream = await apiService.SendAsync(requestUrl, true);

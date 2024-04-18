@@ -135,7 +135,7 @@
         {
             await localStorage.SetItemAsync("userContext", userContext);
             jsruntime.ToastrSuccess("Login Successful");
-            NavManager.NavigateTo("/",forceLoad: true);
+            NavManager.NavigateTo("/dashboard",forceLoad: true);
         }
         else
         {
