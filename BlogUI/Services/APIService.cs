@@ -1,6 +1,10 @@
 ﻿using Blazored.Toast.Services;
 using BlogUI.Models;
 using Microsoft.AspNetCore.Components;
+using System.Net.NetworkInformation;
+using System.Text.Json;
+using BlogUI.Extensions;
+using Microsoft.JSInterop;
 
 namespace BlogUI.Services
 {
@@ -10,15 +14,14 @@ namespace BlogUI.Services
         private readonly NavigationManager _navigationManager;
         private readonly IConfiguration _config;
         private readonly Common _common;
-        private readonly IToastService _toastService;
-        public APIService(IConfiguration config, IHttpClientFactory clientFactory, NavigationManager navigationManager,Common common,IToastService toastService)
+        private readonly IJSRuntime _jSRuntime;
+        public APIService(IConfiguration config, IHttpClientFactory clientFactory, NavigationManager navigationManager,Common common,IJSRuntime jSRuntime)
         {
-            _toastService = toastService;
             _common = common;
             _clientFactory = clientFactory;
             _navigationManager = navigationManager;
             _config = config;
-
+            _jSRuntime = jSRuntime;
         }
         public async Task<Stream> SendAsync(string url, bool isAuthenticated = true)
         {
@@ -62,19 +65,57 @@ namespace BlogUI.Services
             }
             else if (response.ReasonPhrase == "Forbidden")
             {
-                _toastService.ShowWarning("Unauthorized");
+                _jSRuntime.ToastsWarning("Unauthorized");
             }
             else if (response.ReasonPhrase == "Unauthorized")
             {
-                _toastService.ShowWarning("Login to continue");
+                _jSRuntime.ToastsWarning("Login to continue");
                 _navigationManager.NavigateTo("/Login"); // redirect to login page
             }
             else
             {
-                _toastService.ShowWarning(response.ReasonPhrase);
+                _jSRuntime.ToastsWarning(response.ReasonPhrase);
             }
             return null;
 
+        }
+
+        public async Task<Boolean> DeleteAsync(string url)
+        {
+            HttpClient httpClient = _clientFactory.CreateClient();
+            UserContext userContext = await _common.GetUserContext();
+
+            httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", userContext.tokenId);
+
+            HttpResponseMessage response = await httpClient.DeleteAsync(url);
+            httpClient.Dispose();
+            try
+            {
+                ResponseModel responseModel = await JsonSerializer.DeserializeAsync<ResponseModel>(await response.Content.ReadAsStreamAsync());
+
+                if (response.IsSuccessStatusCode)
+                {
+                    return (bool)responseModel.isSuccess;
+                }
+                else if (response.ReasonPhrase == "Forbidden")
+                {
+                    _jSRuntime.ToastsWarning("Unauthorized");
+                }
+                else if (response.ReasonPhrase == "Unauthorized")
+                {
+                    _jSRuntime.ToastsWarning("Login to continue");
+                    _navigationManager.NavigateTo("/Account/Login"); // redirect to login page
+                }
+                else
+                {
+                    _jSRuntime.ToastrError(responseModel.errorMessage);
+                }
+            }
+            catch (Exception ex)
+            {
+                _jSRuntime.ToastrError("Something Went Wrong !!!");
+            }
+            return false;
         }
     }
 }

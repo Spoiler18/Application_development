@@ -1,11 +1,9 @@
-﻿@page "/dashboard"
+﻿@page "/"
 
 @using BlogUI.Models
 @using BlogUI.Services
 
 @inject BlogService blogService
-@inject Common common
-@inject NavigationManager navManager
 
 <style>
     .blogs-container {
@@ -24,7 +22,7 @@
     }
 
         .blog-card:hover {
-            transform: translateY(-5px); /* Move up on hover */
+            transform: translateZ(-5px); /* Move up on hover */
         }
 
         .blog-card h2 {
@@ -40,27 +38,35 @@
         }
 </style>
 
-<div class="blogs-container">
-    @if (blogs != null && blogs.Any())
-    {
-        @foreach (var blog in blogs)
+<div>
+    <div class="blogs-container">
+        @if (blogs != null && blogs.Any())
         {
-            <div class="blog-card">
-                <h2>@blog.blogTitle</h2>
-                <p>@blog.blogDescription</p>
-                <p>By: @blog.userId</p>
-            </div>
+            @foreach (var blog in blogs)
+            {
+                <div class="blog-card">
+                    <div>
+                        <h2>@blog.blogTitle</h2>
+                        <p>@blog.blogDescription</p>
+                        <p>By: @blog.fullName</p>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <a href="/blog?id=@blog.blogId">Read More</a>
+                    </div>
+                </div>
+            }
         }
-    }
-    else
-    {
-        <p>No blogs found.</p>
-    }
+        else
+        {
+            <p>No blogs found.</p>
+        }
+    </div>
 </div>
 
+
 @code{
-    private UserContext userContext = new UserContext();
     private IEnumerable<Blog> blogs { get; set; }
+
 
     protected override async Task OnInitializedAsync()
     {
@@ -68,23 +74,15 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if(firstRender)
+        if (firstRender)
         {
-            userContext = await common.GetUserContext();
-            if(userContext.userId > 0)
-            {
-                await GetBlogList();
-                StateHasChanged();
-            }
-            else
-            {
-                navManager.NavigateTo("/");
-            }
+            await GetBlogList();
+            StateHasChanged();
         }
     }
 
     public async Task GetBlogList()
     {
-        blogs = await blogService.GetBlogList();
+        blogs = await blogService.GetBlogListForBlogs();
     }
 }

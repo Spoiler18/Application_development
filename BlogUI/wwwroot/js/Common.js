@@ -7,4 +7,7 @@ window.ShowToastr = (type, message) => {
     if (type == "error") {
         toastr.error(message, "Operation Failed", { timeOut: 5000 });
     }
+    if (type == "warning") {
+        toastr.warning(message, "Wrong Operation", { timeOut: 5000 });
+    }
 }

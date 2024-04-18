@@ -1,6 +1,6 @@
-﻿@page "/register"
+﻿@page "/account/register"
 
-@using BlogUI.Models; 
+@using BlogUI.Models;
 @using BlogUI.Services;
 @using BlogUI.Enums;
 @using System.Text.Json;
@@ -13,6 +13,7 @@
 @inject Microsoft.Extensions.Configuration.IConfiguration config
 @inject NavigationManager NavManager
 @inject IJSRuntime jsruntime
+@inject Common common
 
 <style>
     .form-container {
@@ -35,6 +36,11 @@
         margin-bottom: 20px;
     }
 
+    .custom-checkbox {
+        width: 20px;
+        height: 20px;
+    }
+
     .form-control {
         width: 100%;
         padding: 12px 20px;
@@ -49,9 +55,9 @@
         text-decoration: none;
     }
 
-    .btn-link:hover {
-        text-decoration: underline;
-    }
+        .btn-link:hover {
+            text-decoration: underline;
+        }
 
 </style>
 
@@ -123,15 +129,21 @@
                     </div>
                 </div>
             </div>
-            <div class="row">
-                <div class="col-md-6">
-                    @* <div class="form-group">
-                        <label for="password">Password</label>
-                        <InputText type="password" class="form-control" id="password" @bind-Value="userDetail.Password" placeholder="Password" />
-                        <ValidationMessage For="@(() => userDetail.Password)" />
-                    </div> *@
+            @if (userContext.userRoleId == true)
+            {
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group d-flex align-items-center gap-2">
+                            <label for="isAdmin" class="mr-2">Is Admin</label>
+                            <div class="custom-control m">
+                                <InputCheckbox id="isAdmin" class="custom-checkbox mt-1" @bind-Value="userDetail.isAdmin" />
+                            </div>
+                            <ValidationMessage For="@(() => userDetail.isAdmin)" />
+                        </div>
+                    </div>
                 </div>
-            </div>
+            }
+
             <button type="submit" class="btn btn-primary">Register</button>
         </div>
     </div>
@@ -140,10 +152,19 @@
 @code {
     [SupplyParameterFromForm]
     private UserDetails userDetail { get; set; } = new UserDetails();
-
+    private UserContext userContext = new UserContext();
 
     protected override async Task OnInitializedAsync()
     {
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            userContext = await common.GetUserContext();
+            StateHasChanged();
+        }
     }
 
     private async Task HandleValidSubmit()
@@ -175,7 +196,7 @@
         if (responseModel.isSuccess == true)
         {
             jsruntime.ToastrSuccess("User Created Successfully!!!");
-            NavManager.NavigateTo("/login");
+            NavManager.NavigateTo("/account/login");
         }
         else
         {

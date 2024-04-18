@@ -1,0 +1,128 @@
+﻿@page "/addeditblog"
+
+@using BlogUI.Components
+@using BlogUI.Services
+@using BlogUI.Models
+@using BlogUI.Extensions;
+
+@inject IJSRuntime jsruntime
+@inject BlogService BlogService
+@inject Common common
+
+<style>
+    .container {
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    label {
+        font-weight: bold;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ced4da;
+        border-radius: 5px;
+        font-size: 16px;
+    }
+
+    textarea.form-control {
+        resize: vertical;
+    }
+
+    .btn-primary {
+        padding: 12px 20px;
+        border: none;
+        border-radius: 5px;
+        font-size: 18px;
+        background-color: #007bff;
+        color: #fff;
+        cursor: pointer;
+    }
+
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+
+    .text-center {
+        text-align: center;
+    }
+</style>
+
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="row">
+            <div class="form-group">
+                <label for="title">Title:</label>
+                <input type="text" class="form-control" placeholder="Enter blog title" @bind="blog.blogTitle" />
+            </div>
+
+            <div class="form-group">
+                <label for="description">Description:</label>
+                <textarea class="form-control" placeholder="Enter blog description" rows="5" @bind="blog.blogDescription"></textarea>
+            </div>
+
+            <div class="text-center">
+                <button class="btn btn-primary btn-lg" @onclick="SaveBlog">Save</button>
+                <button class="btn btn-primary btn-lg" @onclick="Close">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [CascadingParameter] BlazoredModalInstance BlazoredModal { get; set; } = default!;
+    private UserContext userContext = new UserContext();
+
+    [Parameter] public Blog blog { get; set; } = new Blog();
+    [Parameter] public EventCallback<string> Callback { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            userContext = await common.GetUserContext();
+        }
+    }
+
+    private async Task SaveBlog()
+    {
+        var newBlog = new Blog
+        {
+            blogId = blog.blogId,
+            blogTitle = blog.blogTitle,
+            blogDescription = blog.blogDescription,
+            userId = userContext.userId
+        };
+
+        ResponseModel response = await BlogService.AddEditBlog(newBlog);
+        Close();
+        await Callback.InvokeAsync("success");
+
+        if(response.isSuccess == true)
+        {
+            if (newBlog.blogId > 0)
+            {
+                jsruntime.ToastrSuccess("Blog Edited Successful");
+            }
+            else
+            {
+                jsruntime.ToastrSuccess("Blog Added Successful");
+            }
+        }
+        else
+        {
+            jsruntime.ToastrError(response.message);
+        }
+    }
+
+    private async Task Close() => await BlazoredModal.CloseAsync();
+}

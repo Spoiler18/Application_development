@@ -18,19 +18,29 @@
 
 <div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
     <nav class="flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-            </NavLink>
-        </div>
-        @if (userContext.userId > 0)
-        {
+        <div>
             <div class="nav-item px-3">
-                <NavLink class="nav-link" href="/dashboard" Match="NavLinkMatch.All">
-                    <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Dashboard
+                <NavLink class="nav-link" href="/" Match="NavLinkMatch.All">
+                    <RadzenIcon Icon="home"></RadzenIcon>
+                    <span class="" aria-hidden="true"></span> Blogs
                 </NavLink>
             </div>
-        }
+            @if (userContext.userId > 0)
+            {
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="/BlogDashboard/dashboard" Match="NavLinkMatch.All">
+                        <RadzenIcon Icon="dashboard"></RadzenIcon>
+                        <span aria-hidden="true"></span> Dashboard
+                    </NavLink>
+                </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="/account/register" Match="NavLinkMatch.All">
+                        <RadzenIcon Icon="person"></RadzenIcon>
+                        <span aria-hidden="true"></span> Register
+                    </NavLink>
+                </div>
+            }
+        </div>
     </nav>
 </div>
 

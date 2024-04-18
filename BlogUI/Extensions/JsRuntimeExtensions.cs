@@ -12,5 +12,9 @@ namespace BlogUI.Extensions
         {
             return jSRunttime.InvokeVoidAsync("ShowToastr", "error", message);
         }
+        public static ValueTask ToastsWarning(this IJSRuntime jSRunttime, string message)
+        {
+            return jSRunttime.InvokeVoidAsync("ShowToastr", "warning", message);
+        }
     }
 }

@@ -1,0 +1,156 @@
+﻿@page "/BlogDashboard/dashboard"
+
+@using BlogUI.Models
+@using BlogUI.Services
+
+@inject BlogService blogService
+@inject Common common
+@inject NavigationManager navManager
+@inject IModalService modal
+
+<style>
+    .blogs-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        grid-gap: 20px;
+        margin-top: 20px;
+    }
+
+    .blog-card {
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        background-color: #ffffff; /* White background */
+        transition: transform 0.3s ease;
+    }
+
+        .blog-card:hover {
+            transform: translateZ(-5px); /* Move up on hover */
+        }
+
+        .blog-card h2 {
+            color: #333333; /* Dark text color */
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+
+        .blog-card p {
+            color: #666666; /* Medium gray text color */
+            font-size: 16px;
+            line-height: 1.5;
+        }
+</style>
+
+<div>
+    <div class="d-flex justify-content-end mb-3">
+        <RadzenButton Text="Add Blog" Click="@AddBlog" Style="margin-right: 10px;" />
+    </div>
+    <div class="blogs-container">
+        @if (blogs != null && blogs.Any())
+        {
+            @foreach (var blog in blogs)
+            {
+                <div class="blog-card">
+                    <div>
+                        <h2>@blog.blogTitle</h2>
+                        <p>@blog.blogDescription</p>
+                        <p>By: @blog.fullName</p>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <a href="/blog?id=@blog.blogId">Read More</a>
+                        <div>
+                            @if(userContext.userRoleId == true || userContext.userId == blog.userId)
+                            {
+                                <RadzenButton Icon="edit" Title="Edit" @onclick:stopPropagation="true" Click="@(()=> UpdateHandler(blog))" Style="font-weight: 400;" />
+                                <RadzenButton Icon="delete" Title="Edit" @onclick:stopPropagation="true" Click="@(()=> DeleteHandler(blog))" Style="font-weight: 400;" />
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <p>No blogs found.</p>
+        }
+    </div>
+</div>
+
+@code {
+    [CascadingParameter] public IModalService Modal { get; set; } = default!;
+
+    private UserContext userContext = new UserContext();
+    private IEnumerable<Blog> blogs { get; set; }
+
+
+    protected override async Task OnInitializedAsync()
+    {
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            userContext = await common.GetUserContext();
+            if (userContext.userId > 0)
+            {
+                await GetBlogList();
+                StateHasChanged();
+            }
+            else
+            {
+                navManager.NavigateTo("/");
+            }
+        }
+    }
+
+    public async Task GetBlogList()
+    {
+        blogs = await blogService.GetBlogListForDashboard();
+    }
+
+    private async Task DeleteHandler(Blog args)
+    {
+        blogService.DeleteBlog(args);
+        await GetBlogList();
+        StateHasChanged();
+    }
+
+    private async Task UpdateHandler(Blog args)
+    {
+        var parameters = new ModalParameters()
+            .Add(nameof(BlogUI.Components.Pages.BlogDashboard.Modals.AddEditBlog.blog) , args)
+            .Add(nameof(BlogUI.Components.Pages.BlogDashboard.Modals.AddEditBlog.Callback), EventCallback.Factory.Create<string>(this,
+        CallBack));
+
+        var options = new ModalOptions()
+        {
+            Size = ModalSize.Large
+        };
+
+        Modal.Show<BlogUI.Components.Pages.BlogDashboard.Modals.AddEditBlog>("Edit Blog", parameters, options);
+    }
+
+    public async Task CallBack(string? message)
+    {
+        if(message == "success")
+        {
+            await GetBlogList();
+            StateHasChanged();
+        }
+    }
+
+    private async Task AddBlog()
+    {
+        var parameters = new ModalParameters()
+            .Add(nameof(BlogUI.Components.Pages.BlogDashboard.Modals.AddEditBlog.Callback), EventCallback.Factory.Create<string>(this,
+        CallBack));
+
+        var options = new ModalOptions()
+        {
+            Size = ModalSize.Large
+        };
+        
+        Modal.Show<BlogUI.Components.Pages.BlogDashboard.Modals.AddEditBlog>("Add Blog", parameters,options);
+    }
+}

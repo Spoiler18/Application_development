@@ -1,4 +1,4 @@
-﻿@page "/Login"
+﻿@page "/Account/Login"
 @inherits LayoutComponentBase
 
 @using System.Text.Json;
@@ -135,7 +135,7 @@
         {
             await localStorage.SetItemAsync("userContext", userContext);
             jsruntime.ToastrSuccess("Login Successful");
-            NavManager.NavigateTo("/dashboard",forceLoad: true);
+            NavManager.NavigateTo("/BlogDashboard/dashboard",forceLoad: true);
         }
         else
         {
