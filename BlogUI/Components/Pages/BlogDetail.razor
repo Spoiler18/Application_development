@@ -1,0 +1,253 @@
+﻿@page "/blogDetail"
+
+@using BlogUI.Services;
+@using BlogUI.Models;
+@using BlogUI.Enums;
+
+@inject BlogService blogService
+@inject NavigationManager NavManager
+@inject Common common
+
+<style>
+    .dropdown-menu {
+        display: none;
+        position: absolute;
+        background-color: #fff; /* Background color */
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Box shadow for dropdown */
+        z-index: 1000; /* Ensure dropdown appears above other elements */
+    }
+
+        .dropdown-menu.show {
+            display: block;
+        }
+
+    .dropdown:hover .dropdown-menu {
+        display: block;
+        margin-top: 0;
+    }
+
+    .dropup:hover {
+        display: block;
+        margin-top: 0;
+    }
+
+    .active {
+        background-color: #fff0a0;
+        border-radius: 50%; /* Make the border round */
+    }
+
+    .button-div {
+        background-color: #fff
+    }
+
+        .button-div:hover {
+            background-color: #fff0a0;
+        }
+
+    .dropdown-item-custom:hover {
+        background-color: #fff0a0;
+        cursor: pointer;
+        border-radius: 50%;
+    }
+
+    .btn-secondary.dropdown-toggle::after {
+        display: none;
+    }
+
+    .x-large {
+        font-size: 18px; /* Adjust the font size as needed */
+    }
+
+    .custom-color {
+        color: #ff5733;
+    }
+
+    .black-color {
+        color: #000;
+    }
+</style>
+
+<div class="container" style="width: 80%; margin 0 auto;">
+    @if (blog != null)
+    {
+        <div class="card mb-3">
+            <div class="card-body">
+                <h1 class="card-title">@blog.blogTitle</h1>
+                <p class="card-text">@blog.blogDescription</p>
+            </div>
+
+            @if (userContext.userId > 0)
+            {
+
+                <!-- Like and Comment Bar -->
+                <div class="card-footer d-flex justify-content-between align-items-center" style="padding: 0px; border-top: 1px solid #dee2e6;">
+                    <!-- Like Button with Popover -->
+                    <div class="dropdown " style="width: 50%;">
+                        <div class="btn button-div btn-secondary dropdown-toggle d-flex justify-content-center" style="border:none;">
+                            <RadzenIcon Icon="add_reaction" class=@(userReaction > 0 ? "custom-color" : "black-color") @onclick="@(() => ToggleLike(1))" />
+                            <div class="x-large font-weight-bold">
+                                @totalReaction.ToString()
+                            </div>
+                        </div>
+                        <!-- Dropdown menu -->
+                        <div class="dropdown-menu" style="">
+                            <div class="d-flex">
+                                <RadzenIcon Icon="thumb_up" class=@(userReaction == (int)Reactions.Like ? "active dropdown-item-custom m-1 p-3" : "dropdown-item-custom m-1 p-3") @onclick="@(() => ToggleLike(1))" />
+                                <RadzenIcon Icon="thumb_down" class=@(userReaction == (int)Reactions.Dislike ? "active dropdown-item-custom m-1 p-3" : "dropdown-item-custom m-1 p-3") @onclick="@(() => ToggleLike(2))" />
+                                <RadzenIcon Icon="favorite" class=@(userReaction == (int)Reactions.Love ? "active dropdown-item-custom m-1 p-3" : "dropdown-item-custom m-1 p-3") @onclick="@(() => ToggleLike(3))" />
+                                <RadzenIcon Icon="sentiment_satisfied_alt" class=@(userReaction == (int)Reactions.Happy ? "active dropdown-item-custom m-1 p-3" : "dropdown-item-custom m-1 p-3") @onclick="@(() => ToggleLike(4))" />
+                                <RadzenIcon Icon="sentiment_very_dissatisfied" class=@(userReaction == (int)Reactions.Sad ? "active dropdown-item-custom m-1 p-3" : "dropdown-item-custom m-1 p-3") @onclick="@(() => ToggleLike(5))" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Vertical line -->
+                    <div style="width: 1px; height: 40px; background-color: #ced4da;"></div>
+
+                    <!-- Comment Button with colored background -->
+                    <div style="width:50%; padding: 10px; border-radius: 5px;cursor: pointer;" @onclick=@(() => GoToComments()) class="d-flex button-div justify-content-center">
+                        <RadzenIcon Icon="chat" style="background-color: transparent; border-color: transparent;" class=@(userComments.Count() > 0 ? "custom-color" : "black-color") />
+                        <div class="x-large font-weight-bold">
+                            @comments.Count().ToString()
+                        </div>
+                    </div>
+                </div>
+                @if (showCommentSection)
+                {
+                    <div class="comment-section" style="padding: 0px; border-top: 1px solid #dee2e6;">
+                        <!-- Your comment section markup goes here -->
+                        <div class="comment d-flex align-items-center p-4">
+                            <div class="user-avatar p-4" style="background-color: #ffffa0; border-radius: 50%;">@userContext.firstName.ToString().Substring(0, 1).ToUpper()@userContext.lastName.ToString().Substring(0, 1).ToUpper()</div> <!-- Short name with round background -->
+                            <div class="" style="width: 70%; margin: 0 auto;">
+                                <input type="text" style="height: 60px;" class="form-control" placeholder="Write a comment..." />
+                            </div>
+                            <RadzenButton Icon="submit" style="width: 10%; height:20px;">Submit</RadzenButton>
+                        </div>
+                        <!-- Display existing comments, etc. -->
+                    </div>
+                }
+            }
+        </div>
+        
+    }
+</div>
+
+@code {
+    [Parameter] public Blog? blog { get; set; }
+    private UserContext userContext = new UserContext();
+
+    public int? blogId { get; set; }
+
+    private List<string> comments = new List<string>();
+    private List<string> userComments = new List<string>();
+
+    private string commentText;
+    private bool showCommentSection = false;
+
+    private int userReaction = 0;
+    private int userOldReaction = 0;
+
+    private int totalReaction = 0;
+
+    private int likesCount = 0;
+    private int sadCount = 0;
+    private int happyCount = 0;
+    private int dislikeCount = 0;
+    private int loveCount = 0;
+
+    private bool isPopoverVisible = false;
+    private string reactionOptionsDisplay = "none";
+
+    protected override async Task OnInitializedAsync()
+    {
+        var uri = new Uri(NavManager.Uri);
+        var userId = System.Web.HttpUtility.ParseQueryString(uri.Query).Get("id");
+        int value;
+        int.TryParse(userId, out value);
+
+        blogId = Convert.ToInt32(value);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            userContext = await common.GetUserContext();
+            blog = await blogService.GetBlogDetail(blogId);
+            StateHasChanged();
+        }
+    }
+
+    private void AddComment()
+    {
+        comments.Add(commentText);
+        commentText = string.Empty; // Clear the comment text after adding
+    }
+    private void GoToComments()
+    {
+        showCommentSection = !showCommentSection;
+    }
+
+    private void ToggleLike(int id)
+    {
+        userOldReaction = userReaction;
+        switch (id)
+        {
+            case 1:
+                likesCount++;
+                userReaction = (int)Reactions.Like;
+                break;
+
+            case 2:
+                dislikeCount++;
+                userReaction = (int)Reactions.Dislike;
+                break;
+
+            case 3:
+                loveCount++;
+                userReaction = (int)Reactions.Love;
+                break;
+
+            case 4:
+                happyCount++;
+                userReaction = (int)Reactions.Happy;
+                break;
+
+            case 5:
+                sadCount++;
+                userReaction = (int)Reactions.Sad;
+                break;
+
+            default:
+                break;
+
+        }
+        switch (userOldReaction)
+        {
+            case 1:
+                likesCount--;
+                break;
+
+            case 2:
+                dislikeCount--;
+                break;
+
+            case 3:
+                loveCount--;
+                break;
+
+            case 4:
+                happyCount--;
+                break;
+
+            case 5:
+                sadCount--;
+                break;
+
+            default:
+                break;
+
+        }
+        totalReaction = likesCount + dislikeCount + loveCount + happyCount + sadCount;
+    }
+}

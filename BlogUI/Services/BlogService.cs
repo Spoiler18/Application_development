@@ -46,6 +46,20 @@ namespace BlogUI.Services
             }
         }
 
+        public async Task<Blog> GetBlogDetail(int? id)
+        {
+            var requestUrl = configuration["APIBaseUrl"] + $"Blog/GetBlogDetail/{id}" ;
+            var responseStream = await apiService.SendAsync(requestUrl, true);
+            if (responseStream != null)
+            {
+                return await JsonSerializer.DeserializeAsync<Blog>(responseStream);
+            }
+            else
+            {
+                return null;
+            }
+        }
+
         public async void DeleteBlog(Blog blog)
         {
             if (blog.blogId > 0)

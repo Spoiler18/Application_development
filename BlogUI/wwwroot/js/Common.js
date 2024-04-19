@@ -11,3 +11,13 @@ window.ShowToastr = (type, message) => {
         toastr.warning(message, "Wrong Operation", { timeOut: 5000 });
     }
 }
+
+window.showDropdown = (elementId) => {
+    var dropdown = document.getElementById(elementId);
+    dropdown.classList.add("show");
+};
+
+window.hideDropdown = (elementId) => {
+    var dropdown = document.getElementById(elementId);
+    dropdown.classList.remove("show");
+};
