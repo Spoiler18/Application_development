@@ -19,6 +19,7 @@ builder.Services.AddBlazoredModal();
 builder.Services.AddScoped<Common>();
 builder.Services.AddScoped<APIService>();
 builder.Services.AddScoped<BlogService>();
+builder.Services.AddScoped<ReactionCommentService>();
 
 builder.Services.AddLocalization(options =>
 {
