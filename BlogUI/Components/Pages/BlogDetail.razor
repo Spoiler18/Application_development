@@ -83,33 +83,16 @@
                 <!-- Like and Comment Bar -->
                 <div class="card-footer d-flex justify-content-between align-items-center" style="padding: 0px; border-top: 1px solid #dee2e6;">
                     <!-- Like Button with Popover -->
-                    <div class="dropdown " style="width: 50%;">
-                        <div class="btn button-div btn-secondary dropdown-toggle d-flex justify-content-center" style="border:none;">
-                            <RadzenIcon Icon="add_reaction" class=@(userReaction > 0 ? "custom-color" : "black-color") @onclick="@(() => ToggleLike(1))" />
-                            <div class="x-large font-weight-bold">
-                                @totalReaction.ToString()
-                            </div>
-                        </div>
-                        <!-- Dropdown menu -->
-                        <div class="dropdown-menu" style="">
-                            <div class="d-flex">
-                                <RadzenIcon Icon="thumb_up" class=@(userReaction == (int)Reactions.Like ? "active dropdown-item-custom m-1 p-3" : "dropdown-item-custom m-1 p-3") @onclick="@(() => ToggleLike(1))" />
-                                <RadzenIcon Icon="thumb_down" class=@(userReaction == (int)Reactions.Dislike ? "active dropdown-item-custom m-1 p-3" : "dropdown-item-custom m-1 p-3") @onclick="@(() => ToggleLike(2))" />
-                                <RadzenIcon Icon="favorite" class=@(userReaction == (int)Reactions.Love ? "active dropdown-item-custom m-1 p-3" : "dropdown-item-custom m-1 p-3") @onclick="@(() => ToggleLike(3))" />
-                                <RadzenIcon Icon="sentiment_satisfied_alt" class=@(userReaction == (int)Reactions.Happy ? "active dropdown-item-custom m-1 p-3" : "dropdown-item-custom m-1 p-3") @onclick="@(() => ToggleLike(4))" />
-                                <RadzenIcon Icon="sentiment_very_dissatisfied" class=@(userReaction == (int)Reactions.Sad ? "active dropdown-item-custom m-1 p-3" : "dropdown-item-custom m-1 p-3") @onclick="@(() => ToggleLike(5))" />
-                            </div>
-                        </div>
-                    </div>
+                    <BlogUI.Components.Assets.LikeComponent blogReactions="@blog.blogReactions" blogId="@blog.blogId" OnChanged="@Callback"/>
 
                     <!-- Vertical line -->
                     <div style="width: 1px; height: 40px; background-color: #ced4da;"></div>
 
                     <!-- Comment Button with colored background -->
                     <div style="width:50%; padding: 10px; border-radius: 5px;cursor: pointer;" @onclick=@(() => GoToComments()) class="d-flex button-div justify-content-center">
-                        <RadzenIcon Icon="chat" style="background-color: transparent; border-color: transparent;" class=@(userComments.Count() > 0 ? "custom-color" : "black-color") />
+                        <RadzenIcon Icon="chat" style="background-color: transparent; border-color: transparent;" class=@(blog.blogComments?.Count() > 0 ? "black-color" : "black-color") />
                         <div class="x-large font-weight-bold">
-                            @comments.Count().ToString()
+                            @blog.blogComments?.Count().ToString()
                         </div>
                     </div>
                 </div>
@@ -120,16 +103,22 @@
                         <div class="comment d-flex align-items-center p-4">
                             <div class="user-avatar p-4" style="background-color: #ffffa0; border-radius: 50%;">@userContext.firstName.ToString().Substring(0, 1).ToUpper()@userContext.lastName.ToString().Substring(0, 1).ToUpper()</div> <!-- Short name with round background -->
                             <div class="" style="width: 70%; margin: 0 auto;">
-                                <input type="text" style="height: 60px;" class="form-control" placeholder="Write a comment..." />
+                                <input type="text" style="height: 60px;" class="form-control" @bind-value="@commentText" placeholder="Write a comment..." />
                             </div>
-                            <RadzenButton Icon="submit" style="width: 10%; height:20px;">Submit</RadzenButton>
+                            <RadzenButton Icon="submit" style="width: 10%; height:20px;" Click="AddComment">Submit</RadzenButton>
+                        </div>
+                        <div>
+                            @foreach (var comment in blog.blogComments)
+                            {
+                                <BlogUI.Components.Assets.CommentComponent comment="@comment" OnChanged="@Callback" />
+                            }
                         </div>
                         <!-- Display existing comments, etc. -->
                     </div>
                 }
             }
         </div>
-        
+
     }
 </div>
 
@@ -139,9 +128,6 @@
 
     public int? blogId { get; set; }
 
-    private List<string> comments = new List<string>();
-    private List<string> userComments = new List<string>();
-
     private string commentText;
     private bool showCommentSection = false;
 
@@ -149,15 +135,11 @@
     private int userReaction = 0;
     private int ReactionId = 0;
     private int CommentId = 0;
+    private int CommentEditId = 0;
+
     private int userOldReaction = 0;
 
     private int totalReaction = 0;
-
-    private int likesCount = 0;
-    private int sadCount = 0;
-    private int happyCount = 0;
-    private int dislikeCount = 0;
-    private int loveCount = 0;
 
     protected override async Task OnInitializedAsync()
     {
@@ -174,8 +156,8 @@
         if (firstRender)
         {
             userContext = await common.GetUserContext();
-            blog = await blogService.GetBlogDetail(blogId);
-            if(userContext.userId > 0 && blog.blogReactions.Count() > 0)
+            await GetBlog();
+            if (userContext.userId > 0 && blog.blogReactions.Count() > 0)
             {
                 userReaction = (int)blog.blogReactions?.Where(item => item.userId == userContext.userId).Select(item => item.userReaction).FirstOrDefault();
                 ReactionId = (int)blog.blogReactions?.Where(item => item.userId == userContext.userId).Select(item => item.reactionId).FirstOrDefault();
@@ -186,95 +168,55 @@
         }
     }
 
+    private async Task GetBlog()
+    {
+        blog = await blogService.GetBlogDetail(blogId);
+    }
+
+    public async Task Callback(string message)
+    {
+        if(message == "success")
+        {
+            await this.GetBlog();
+            StateHasChanged();
+        }
+    }
+
+    // private async Task EditComment(DetailedComment comment)
+    // {
+    //     CommentId = comment.commentId;
+    //     CommentEditId = comment.commentId;
+    // }
+
+    // private async Task DeleteComment(DetailedComment comment)
+    // {
+    //     CommentId = comment.commentId;
+    //     await reactionCommentService.DeleteBlogComment(comment.commentId);
+    //     await GetBlog();
+    //     StateHasChanged();
+    // }
+
+    // private async Task ReplyComment(DetailedComment comment)
+    // {
+    //     CommentId = 0;
+    //     replyToCommentId = comment.commentId;
+    //     await AddComment();
+    // }
+
     private async Task AddComment()
     {
-        comments.Add(commentText);
-
-        await reactionCommentService.AddEditBlogComment(CommentId, commentText, userContext.userId, blog.blogId,replyToCommentId);
-
+        if (commentText != null)
+        {
+            await reactionCommentService.AddEditBlogComment(CommentId, commentText, userContext.userId, blog.blogId, replyToCommentId);
+        }
+        await GetBlog();
         commentText = string.Empty;
+        StateHasChanged();
     }
+
     private void GoToComments()
     {
         showCommentSection = !showCommentSection;
     }
 
-    private async Task ToggleLike(int id)
-    {
-        if(userReaction != id)
-        {
-            userOldReaction = userReaction;
-            switch (id)
-            {
-                case 1:
-                    likesCount++;
-                    userReaction = (int)Reactions.Like;
-                    break;
-
-                case 2:
-                    dislikeCount++;
-                    userReaction = (int)Reactions.Dislike;
-                    break;
-
-                case 3:
-                    loveCount++;
-                    userReaction = (int)Reactions.Love;
-                    break;
-
-                case 4:
-                    happyCount++;
-                    userReaction = (int)Reactions.Happy;
-                    break;
-
-                case 5:
-                    sadCount++;
-                    userReaction = (int)Reactions.Sad;
-                    break;
-
-                default:
-                    break;
-
-            }
-            switch (userOldReaction)
-            {
-                case 1:
-                    likesCount--;
-                    break;
-
-                case 2:
-                    dislikeCount--;
-                    break;
-
-                case 3:
-                    loveCount--;
-                    break;
-
-                case 4:
-                    happyCount--;
-                    break;
-
-                case 5:
-                    sadCount--;
-                    break;
-
-                default:
-                    break;
-
-            }
-
-            if (userOldReaction == 0)
-            {
-                totalReaction = totalReaction + 1;
-            }
-
-            await reactionCommentService.AddEditBlogReaction(ReactionId, userReaction, userOldReaction, userContext.userId, blog.blogId);
-        }
-        else
-        {
-            reactionCommentService.DeleteBlogReaction(ReactionId);
-            userOldReaction = 0;
-            userReaction = 0;
-            totalReaction = totalReaction - 1;
-        }
-    }
 }

@@ -18,7 +18,7 @@ namespace BlogUI.Services
             JS = jS;
         }
 
-        public async Task<ResponseModel> AddEditBlogReaction(int reactionId,int userReaction, int userOldReaction, int userId, int blogId)
+        public async Task<ResponseModel> AddEditBlogReaction(int reactionId,int userReaction,int userId, int? blogId)
         {
             var requestUrl = configuration["APIBaseUrl"] + "ReactionComment/EditBlogReaction";
 
@@ -134,7 +134,7 @@ namespace BlogUI.Services
             }
         }
 
-        public async void DeleteBlogComment(int commentId)
+        public async Task DeleteBlogComment(int commentId)
         {
             if (commentId > 0)
             {

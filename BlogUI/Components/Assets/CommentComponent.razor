@@ -1,0 +1,100 @@
+﻿@using BlogUI.Models;
+@using BlogUI.Services;
+
+@inject Common common
+@inject ReactionCommentService reactionCommentService
+
+<div>
+    <div class="d-flex align-items-center p-4">
+
+        <!-- Short name with round background -->
+        <div class="user-avatar p-4" style="background-color: #ffffa0; border-radius: 50%;">
+            @comment.userCommentFullName.ToString().Split(" ")[0].Substring(0, 1).ToUpper()
+            @comment.userCommentFullName.ToString().Split(" ")[1].Substring(0, 1).ToUpper()
+        </div>
+
+        <!-- Comment text -->
+        <div class="" style="width: 70%; margin: 0 auto;">
+            @if (isEdit)
+            {
+                <input type="text" style="height: 60px;" class="form-control" @bind-value="@comment.userComment" placeholder="Edit comment..." />
+                <RadzenButton Icon="submit" style="width: 10%; height:20px;" Click="EditComment">Save</RadzenButton>
+                <RadzenButton Icon="submit" style="width: 10%; height:20px;" Click="@(() => isEdit = false)">Cancel</RadzenButton>
+            }
+            else
+            {
+                <span>@comment.userComment</span>
+            }
+        </div>
+
+        <!-- Like, Reply, and Edit buttons -->
+        <div class="d-flex flex-column justify-content-center">
+            <LikeComponent isCommentLikeComponent=true commentReactions="comment.commentReactions" blogId=@((int)comment.blogId) CommentId="comment.commentId" OnChanged="@Callback" />
+
+            <div class="d-flex justify-content-between">
+                @if (userContext.userId == comment.userId)
+                {
+                    <RadzenButton Icon="edit" Click="@(() => isEdit = true)" />
+                    <RadzenButton Icon="delete" Click="@(() => DeleteComment())" />
+                }
+                @* <RadzenButton Icon="reply" Click="@(() => isReply = !isReply)" /> *@
+            </div>
+        </div>
+    </div>
+
+    @* @if (isReply)
+    {
+        <div class="d-flex align-items-center p-4" style="width : 90%; margin-left: auto;">
+            <div class="user-avatar p-3" style="background-color: #ffffa0; border-radius: 50%;">@userContext.firstName.ToString().Substring(0, 1).ToUpper()@userContext.lastName.ToString().Substring(0, 1).ToUpper()</div> <!-- Short name with round background -->
+            <div class="" style="width: 70%; margin: 0 auto;">
+                <input type="text" style="height: 3rem;" class="form-control" @bind-value="@ReplyCommentText" placeholder="Write a comment..." />
+            </div>
+            <RadzenButton Icon="submit" style="width: 10%; height:1rem;" Click="ReplyComment">Submit</RadzenButton>
+        </div>
+    } *@
+
+</div>
+
+
+@code {
+    [Parameter] public DetailedComment? comment { get; set; }
+    [Parameter] public EventCallback<string> OnChanged { get; set; }
+
+    private UserContext userContext = new UserContext();
+    private bool isEdit = false;
+    private bool isReply = false;
+    private string ReplyCommentText = "";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            userContext = await common.GetUserContext();
+            StateHasChanged();
+        }
+    }
+
+    public async Task Callback(string message)
+    {
+        if (message == "success")
+        {
+            await OnChanged.InvokeAsync("success");
+        }
+    }
+
+    private async Task EditComment()
+    {
+        isEdit = false;
+        await reactionCommentService.AddEditBlogComment(comment.commentId, comment.userComment, userContext.userId, (int)comment.blogId, 0);
+    }
+
+    // private async Task ReplyComment()
+    // {
+    //     // await reactionCommentService.AddEditBlogComment(0, comment.userComment, userContext.userId, (int)comment.blogId, comment.commentId);
+    // }
+
+    private async Task DeleteComment()
+    {
+        await reactionCommentService.DeleteBlogComment(comment.commentId);
+    }
+}
