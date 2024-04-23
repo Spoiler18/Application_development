@@ -113,7 +113,6 @@
                                 <BlogUI.Components.Assets.CommentComponent comment="@comment" OnChanged="@Callback" />
                             }
                         </div>
-                        <!-- Display existing comments, etc. -->
                     </div>
                 }
             }
@@ -131,16 +130,6 @@
     private string commentText;
     private bool showCommentSection = false;
 
-    private int replyToCommentId = 0;
-    private int userReaction = 0;
-    private int ReactionId = 0;
-    private int CommentId = 0;
-    private int CommentEditId = 0;
-
-    private int userOldReaction = 0;
-
-    private int totalReaction = 0;
-
     protected override async Task OnInitializedAsync()
     {
         var uri = new Uri(NavManager.Uri);
@@ -156,14 +145,9 @@
         if (firstRender)
         {
             userContext = await common.GetUserContext();
+
             await GetBlog();
-            if (userContext.userId > 0 && blog.blogReactions.Count() > 0)
-            {
-                userReaction = (int)blog.blogReactions?.Where(item => item.userId == userContext.userId).Select(item => item.userReaction).FirstOrDefault();
-                ReactionId = (int)blog.blogReactions?.Where(item => item.userId == userContext.userId).Select(item => item.reactionId).FirstOrDefault();
-                totalReaction = blog.blogReactions.Count();
-                userOldReaction = userReaction;
-            }
+            
             StateHasChanged();
         }
     }
@@ -182,32 +166,11 @@
         }
     }
 
-    // private async Task EditComment(DetailedComment comment)
-    // {
-    //     CommentId = comment.commentId;
-    //     CommentEditId = comment.commentId;
-    // }
-
-    // private async Task DeleteComment(DetailedComment comment)
-    // {
-    //     CommentId = comment.commentId;
-    //     await reactionCommentService.DeleteBlogComment(comment.commentId);
-    //     await GetBlog();
-    //     StateHasChanged();
-    // }
-
-    // private async Task ReplyComment(DetailedComment comment)
-    // {
-    //     CommentId = 0;
-    //     replyToCommentId = comment.commentId;
-    //     await AddComment();
-    // }
-
     private async Task AddComment()
     {
         if (commentText != null)
         {
-            await reactionCommentService.AddEditBlogComment(CommentId, commentText, userContext.userId, blog.blogId, replyToCommentId);
+            await reactionCommentService.AddEditBlogComment(0, commentText, userContext.userId, blog.blogId, 0);
         }
         await GetBlog();
         commentText = string.Empty;

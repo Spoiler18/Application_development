@@ -20,6 +20,8 @@ builder.Services.AddScoped<Common>();
 builder.Services.AddScoped<APIService>();
 builder.Services.AddScoped<BlogService>();
 builder.Services.AddScoped<ReactionCommentService>();
+builder.Services.AddScoped<RegisterLoginService>();
+builder.Services.AddScoped<AccountService>();
 
 builder.Services.AddLocalization(options =>
 {

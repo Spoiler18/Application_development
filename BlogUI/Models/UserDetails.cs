@@ -22,6 +22,7 @@ namespace BlogUI.Models
         public int? gender { get; set; }
 
         public bool isAdmin { get; set; }
+        public bool? isDeactivated { get; set; }
 
         public bool? isDeleted { get; set; }
 
@@ -39,6 +40,33 @@ namespace BlogUI.Models
         public string? password { get; set; }
     }
 
+    public class UserEditDetails
+    {
+        public int userId { get; set; }
+
+        [Required(ErrorMessage = "First name is required")]
+        public string firstName { get; set; }
+
+        [Required(ErrorMessage = "Last name is required")]
+        public string lastName { get; set; }
+
+        [Required(ErrorMessage = "Email is required")]
+        [EmailAddress(ErrorMessage = "Invalid email format")]
+        public string email { get; set; }
+
+        [Required(ErrorMessage = "Gender is Required")]
+        public int? gender { get; set; }
+
+        public bool isAdmin { get; set; }
+
+        [Required(ErrorMessage = "Date of birth is required")]
+        [DataType(DataType.Date)]
+        public DateTime dateOfBirth { get; set; } = DateTime.Now;
+
+        [RegularExpression(@"^(\+\d{1,3}[- ]?)?\d{10}$", ErrorMessage = "Invalid phone number")]
+        public string contactNumber { get; set; }
+    }
+
     public class LoginDetail
     {
         [Required(ErrorMessage = "Please Enter Email.")]
@@ -48,7 +76,7 @@ namespace BlogUI.Models
         public string? Password { get; set; }
     }
 
-    public partial class ChangePassword
+    public partial class ChangePasswordModel
     {
         public int UserId { get; set; }
         [Required]

@@ -2,11 +2,13 @@
 
 @using BlogUI.Models
 @using BlogUI.Services
+@using Blazored.LocalStorage;
 
 @inject BlogService blogService
 @inject Common common
 @inject NavigationManager navManager
 @inject IModalService modal
+@inject ILocalStorageService localStorage
 
 <style>
     .blogs-container {
@@ -104,6 +106,11 @@
         if (firstRender)
         {
             userContext = await common.GetUserContext();
+            if(userContext.isDeactivated == true)
+            {
+                await localStorage.RemoveItemAsync("userContext");
+                navManager.NavigateTo("/", forceLoad: true);
+            }
             if (userContext.userId > 0)
             {
                 await GetBlogList();

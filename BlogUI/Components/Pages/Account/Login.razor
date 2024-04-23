@@ -135,7 +135,15 @@
         {
             await localStorage.SetItemAsync("userContext", userContext);
             jsruntime.ToastrSuccess("Login Successful");
-            NavManager.NavigateTo("/BlogDashboard/dashboard",forceLoad: true);
+
+            if(userContext.isDeactivated == true)
+            {
+                NavManager.NavigateTo("/user/ReactivateUser", forceLoad: true);
+            }
+            else
+            {
+                NavManager.NavigateTo("/BlogDashboard/dashboard", forceLoad: true);
+            }
         }
         else
         {

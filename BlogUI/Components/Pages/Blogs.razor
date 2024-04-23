@@ -2,8 +2,12 @@
 
 @using BlogUI.Models
 @using BlogUI.Services
+@using Blazored.LocalStorage;
 
 @inject BlogService blogService
+@inject NavigationManager navigationManager
+@inject Common common
+@inject ILocalStorageService localStorage
 
 <style>
     .blogs-container {
@@ -79,7 +83,7 @@
 
 @code{
     private IEnumerable<Blog> blogs { get; set; }
-
+    private UserContext userContext = new UserContext();
 
     protected override async Task OnInitializedAsync()
     {
@@ -89,6 +93,12 @@
     {
         if (firstRender)
         {
+            userContext = await common.GetUserContext();
+            if (userContext.isDeactivated == true)
+            {
+                await localStorage.RemoveItemAsync("userContext");
+                navigationManager.NavigateTo("/", forceLoad: true);
+            }
             await GetBlogList();
             StateHasChanged();
         }

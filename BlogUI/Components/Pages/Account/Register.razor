@@ -163,6 +163,18 @@
         if (firstRender)
         {
             userContext = await common.GetUserContext();
+            if (userContext.userId > 0)
+            {
+                if (userContext.userRoleId == true)
+                {
+
+                }
+                else
+                {
+                    NavManager.NavigateTo("/");
+                }
+            }
+
             StateHasChanged();
         }
     }

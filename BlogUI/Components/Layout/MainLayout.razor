@@ -39,9 +39,9 @@
                         @userContext.firstName @userContext.lastName
                     </a>
                     <ul class="dropdown-menu" aria-labelledby="userDropdown">
-                        <li><button class="dropdown-item" >User Detail</button></li>
-                        <li><button class="dropdown-item">Change Password</button></li>
-                        <li><hr class="dropdown-divider"></li>
+                        <li><button class="dropdown-item" @onclick="UserDetail">User Detail</button></li>
+                        <li><button class="dropdown-item" @onclick="ChangePassword">Change Password</button></li>
+                        <li><hr class="dropdown-divider" ></li>
                         <li><button class="dropdown-item" @onclick="LogOut">Log Out</button></li>
                     </ul>
                 </div>
@@ -63,6 +63,7 @@
                 </div>
             }
         </div>
+        
 
         <article class="content px-4">
             @Body
@@ -106,6 +107,16 @@
     {
         await localStorage.RemoveItemAsync("userContext");
         navManager.NavigateTo("/",forceLoad: true);
+    }
+
+    public void ChangePassword()
+    {
+        navManager.NavigateTo("/account/ChangePassword");
+    }
+
+    public void UserDetail()
+    {
+        navManager.NavigateTo("/user/UserDetail");
     }
 
     public void NavigateToLogin()
