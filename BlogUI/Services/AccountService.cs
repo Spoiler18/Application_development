@@ -16,7 +16,7 @@ namespace BlogUI.Services
         {
             this.apiService = apiService;
             this.configuration = configuration;
-            JS = jS;
+            this.JS = jS;
         }
 
         public async Task<IEnumerable<UserDetails>> GetUserList()

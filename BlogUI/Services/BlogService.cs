@@ -97,6 +97,7 @@ namespace BlogUI.Services
                     blogTitle = blog.blogTitle,
                     blogDescription = blog.blogDescription,
                     userId = blog.userId,
+                    blogImages = blog.blogImages,
                 }),
                 Encoding.UTF8,
                 "application/json");

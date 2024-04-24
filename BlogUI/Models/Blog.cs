@@ -10,6 +10,7 @@ namespace BlogUI.Models
         public string? blogDescription { get; set; }
         public string? fullName { get; set; }
         public bool? isDeleted { get; set; }
+        public List<byte[]>? imageBytesList { get; set; }
         public IEnumerable<BlogImage>? blogImages { get; set; }
         public IEnumerable<DetailedReaction>? blogReactions { get; set; }
         public IEnumerable<DetailedComment>? blogComments { get; set; }
@@ -20,6 +21,7 @@ namespace BlogUI.Models
         public int imageId { get; set; }
         public int? blogId { get; set; }
         public string? imagePath { get; set; }
+        public byte[]? imageBytes { get; set; }
     }
 
     public class DetailedReaction

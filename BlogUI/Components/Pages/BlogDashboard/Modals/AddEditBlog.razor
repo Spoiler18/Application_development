@@ -66,6 +66,20 @@
                 <textarea class="form-control" placeholder="Enter blog description" rows="5" @bind="blog.blogDescription"></textarea>
             </div>
 
+            <InputFile id="profileimage" OnChange="HandleProfileChange" multiple accept=".png,.jpg,.jpeg,.gif,.tif" />
+
+            @if (blog.blogImages != null)
+            {
+                @foreach (var imageBytes in blog.blogImages)
+                {
+                    <div style="display: inline-block; margin-right: 10px;">
+                        <img src="@($"data:image/png;base64,{Convert.ToBase64String(imageBytes.imageBytes)}")" alt="Blog Image" style="width:100px;height:100px;margin-bottom:5px;" />
+                        <button @onclick="() => RemoveImage(imageBytes)">Remove</button>
+                    </div>
+                }
+            }
+
+
             <div class="text-center">
                 <button class="btn btn-primary btn-lg" @onclick="SaveBlog">Save</button>
                 <button class="btn btn-primary btn-lg" @onclick="Close">Close</button>
@@ -85,6 +99,90 @@
     {
     }
 
+    private async Task HandleProfileChange(InputFileChangeEventArgs e)
+    {
+        foreach (var file in e.GetMultipleFiles())
+        {
+            if (file.Size > 3 * 1024 * 1024) // 3 MB in bytes
+            {
+                jsruntime.ToastsWarning($"File '{file.Name}' is larger than 3 MB.");
+                continue; // Skip processing this file
+            }
+
+            var buffer = new byte[file.Size];
+            await file.OpenReadStream().ReadAsync(buffer);
+
+            // Create a new BlogImage instance
+            var newImage = new BlogImage
+                {
+                    imageBytes = buffer
+                };
+
+            // Check if blog.blogImages is null, if yes, initialize it with an empty list
+            if (blog.blogImages == null)
+            {
+                blog.blogImages = new List<BlogImage>();
+            }
+
+            // Add the new image to the list
+            var mutableBlogImages = blog.blogImages.ToList();
+
+            // Remove the image from the list
+            mutableBlogImages.Add(newImage);
+
+            // Assign the modified list back to blog.blogImages
+            blog.blogImages = mutableBlogImages;
+        }
+
+        // Trigger UI refresh
+        StateHasChanged();
+    }
+
+    private void RemoveImage(BlogImage image)
+    {
+        if (blog.blogImages != null)
+        {
+            var mutableBlogImages = blog.blogImages.ToList();
+
+            // Remove the image from the list
+            mutableBlogImages.Remove(image);
+
+            // Assign the modified list back to blog.blogImages
+            blog.blogImages = mutableBlogImages;
+
+            // Trigger UI refresh
+            StateHasChanged();
+        }
+    }
+
+    private async Task<string> ConvertFileToBase64(IBrowserFile file)
+    {
+        var buffer = new byte[file.Size];
+        await file.OpenReadStream().ReadAsync(buffer);
+        return Convert.ToBase64String(buffer);
+    }
+
+    // private async Task HandleProfileChange(InputFileChangeEventArgs e)
+    // {
+    //     foreach (var file in e.GetMultipleFiles())
+    //     {
+    //         // Check if the file size exceeds 3 MB
+    //         if (file.Size > 3 * 1024 * 1024) // 3 MB in bytes
+    //         {
+    //             jsruntime.ToastsWarning($"File '{file.Name}' is larger than 3 MB.");
+    //             continue; // Skip processing this file
+    //         }
+
+    //         var buffer = new byte[file.Size];
+    //         await file.OpenReadStream().ReadAsync(buffer);
+    //         ImageBytesList.Add(buffer);
+
+    //         // Convert byte array to base64 string to display in the <img> tag
+    //         var imageDataUrl = $"data:{file.ContentType};base64,{Convert.ToBase64String(buffer)}";
+    //         ImageDataUrls.Add(imageDataUrl);
+    //     }
+    // }
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
@@ -96,18 +194,19 @@
     private async Task SaveBlog()
     {
         var newBlog = new Blog
-        {
-            blogId = blog.blogId,
-            blogTitle = blog.blogTitle,
-            blogDescription = blog.blogDescription,
-            userId = userContext.userId
-        };
+            {
+                blogId = blog.blogId,
+                blogTitle = blog.blogTitle,
+                blogDescription = blog.blogDescription,
+                userId = userContext.userId,
+                blogImages = blog.blogImages,
+            };
 
         ResponseModel response = await BlogService.AddEditBlog(newBlog);
         Close();
         await Callback.InvokeAsync("success");
 
-        if(response.isSuccess == true)
+        if (response.isSuccess == true)
         {
             if (newBlog.blogId > 0)
             {

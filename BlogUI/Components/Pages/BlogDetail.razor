@@ -66,6 +66,26 @@
     .black-color {
         color: #000;
     }
+
+    .image-container {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 10px; /* Adjust as needed */
+        justify-content: center;
+        align-items: center;
+        margin-top: 20px; /* Adjust margin as needed */
+        max-height: 600px;
+    }
+
+    .blog-image {
+        max-width: 40%;
+        object-fit: cover;
+        border-radius: 5px;
+    }
+
+    In this
+    
 </style>
 
 <div class="container" style="width: 80%; margin 0 auto;">
@@ -76,14 +96,22 @@
                 <h1 class="card-title">@blog.blogTitle</h1>
                 <p class="card-text">@blog.blogDescription</p>
             </div>
-
+            <div class="image-container">
+                @foreach (var image in blog.blogImages)
+                {
+                    if (image.imageBytes != null)
+                    {
+                        <img src="@($"data:image/png;base64,{Convert.ToBase64String(image.imageBytes)}")" alt="Blog Image" class="blog-image" />
+                    }
+                }
+            </div>
             @if (userContext.userId > 0)
             {
 
                 <!-- Like and Comment Bar -->
                 <div class="card-footer d-flex justify-content-between align-items-center" style="padding: 0px; border-top: 1px solid #dee2e6;">
                     <!-- Like Button with Popover -->
-                    <BlogUI.Components.Assets.LikeComponent blogReactions="@blog.blogReactions" blogId="@blog.blogId" OnChanged="@Callback"/>
+                    <BlogUI.Components.Assets.LikeComponent blogReactions="@blog.blogReactions" blogId="@blog.blogId" OnChanged="@Callback" />
 
                     <!-- Vertical line -->
                     <div style="width: 1px; height: 40px; background-color: #ced4da;"></div>
@@ -147,7 +175,7 @@
             userContext = await common.GetUserContext();
 
             await GetBlog();
-            
+
             StateHasChanged();
         }
     }
@@ -159,7 +187,7 @@
 
     public async Task Callback(string message)
     {
-        if(message == "success")
+        if (message == "success")
         {
             await this.GetBlog();
             StateHasChanged();
