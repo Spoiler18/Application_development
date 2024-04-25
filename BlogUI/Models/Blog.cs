@@ -6,10 +6,12 @@ namespace BlogUI.Models
     {
         public int blogId { get; set; }
         public int? userId { get; set; }
+        public int? popularity { get; set; }
         public string? blogTitle { get; set; }
         public string? blogDescription { get; set; }
         public string? fullName { get; set; }
         public bool? isDeleted { get; set; }
+        public DateTime? createdOn { get; set; }
         public List<byte[]>? imageBytesList { get; set; }
         public IEnumerable<BlogImage>? blogImages { get; set; }
         public IEnumerable<DetailedReaction>? blogReactions { get; set; }
