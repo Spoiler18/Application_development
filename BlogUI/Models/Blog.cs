@@ -26,6 +26,14 @@ namespace BlogUI.Models
         public byte[]? imageBytes { get; set; }
     }
 
+    public class Notifications
+    {
+        public int? userId { get; set; }
+        public int? blogId { get; set; }
+        public string? message { get; set; }
+        public string? userFullName { get; set; }
+    }
+
     public class DetailedReaction
     {
         public int reactionId { get; set; }

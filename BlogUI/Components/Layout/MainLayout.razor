@@ -9,12 +9,13 @@
 @inject ILocalStorageService localStorage
 @inject NavigationManager navManager
 @inject IJSRuntime jsruntime
+@inject BlogService blogService
 
 <style>
     .dropdown-toggle {
         color: #6c757d; /* Text color */
         text-decoration: none; /* Remove underline */
-        padding : 10px
+        padding: 10px
     }
 
         .dropdown-toggle:hover,
@@ -23,6 +24,8 @@
             color: #343a40; /* Dark text color on hover */
             text-decoration: none;
         }
+
+
 </style>
 
 <div class="page">
@@ -31,9 +34,36 @@
     </div>
 
     <main>
-        <div class="top-row px-4" style="display: flex; justify-content: flex-end; gap: 1rem; background-image: linear-gradient(270deg, rgb(245, 245, 240) 0%, #fff2a0 90%); padding: 1rem;">
+        <div class="top-row px-4" style="display: flex; justify-content: between; gap: 1rem; background-image: linear-gradient(270deg, rgb(245, 245, 240) 0%, #fff2a0 90%); padding: 1rem;">
             @if (userContext.userId > 0)
             {
+                <div class="dropdown">
+                    <RadzenIcon Icon="notifications" class="dropdown-toggle" @onclick="ToggleNotifications" Style="cursor:pointer;" />
+                    <span>@notifications.Count()</span>
+                    <div class="dropdown-menu notifications-dropdown" style="display: @notificationsDropdownDisplay; margin-left: -200px;">
+                        @if (notifications.Count() > 0)
+                        {
+                            <div class="notifications-container">
+                                <RadzenGrid Data="@notifications" TItem="Notifications" Style="max-height: 400px; width:400px; overflow-y: auto;">
+                                    <Columns>
+                                        <RadzenGridColumn TItem="Notifications" Property="message" Title="Notifications" Width="250px">
+                                            <Template Context="notification">
+                                                <span style="white-space:nowrap;">@notification.message</span>
+                                                <button class="btn btn-link" @onclick="()=> NavigateToBlogDetail(notification.blogId)">View</button>
+                                            </Template>
+                                        </RadzenGridColumn>
+                                            
+                                    </Columns>
+                                </RadzenGrid>
+                            </div>
+                        }
+                        else
+                        {
+                            <a class="dropdown-item">No notifications</a>
+                        }
+                    </div>
+                </div>
+
                 <div class="dropdown">
                     <a class="dropdown-toggle" href="#" role="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                         @userContext.firstName @userContext.lastName
@@ -41,17 +71,11 @@
                     <ul class="dropdown-menu" aria-labelledby="userDropdown">
                         <li><button class="dropdown-item" @onclick="UserDetail">User Detail</button></li>
                         <li><button class="dropdown-item" @onclick="ChangePassword">Change Password</button></li>
-                        <li><hr class="dropdown-divider" ></li>
+                        <li><hr class="dropdown-divider"></li>
                         <li><button class="dropdown-item" @onclick="LogOut">Log Out</button></li>
                     </ul>
                 </div>
 
-                @* <div>
-                    @userContext.firstName @userContext.lastName
-                </div>
-                <div style="margin-right: 1rem;">
-                    <button class="p-1" @onclick="LogOut" style="color: #000; text-decoration: none; border: none; padding: 12px 20px; border-radius: 5px; background-color: #fff2a0; transition: background-color 0.3s; font-weight: bold; display: inline-block;">Log Out</button>
-                </div> *@
             }
             else
             {
@@ -63,7 +87,7 @@
                 </div>
             }
         </div>
-        
+
 
         <article class="content px-4">
             @Body
@@ -80,10 +104,22 @@
 @code
 {
     private UserContext userContext = new UserContext();
+    private IEnumerable<Notifications> notifications;
     private string token = string.Empty;
+    private string notificationsDropdownDisplay = "none";
 
     protected override async Task OnInitializedAsync()
     {
+    }
+
+    private void NavigateToBlogDetail(int? blogId)
+    {
+        navManager.NavigateTo($"/BlogDetail?id={blogId}");
+    }
+
+    private void ToggleNotifications()
+    {
+        notificationsDropdownDisplay = notificationsDropdownDisplay == "none" ? "block" : "none";
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -99,14 +135,23 @@
             {
                 await localStorage.RemoveItemAsync("userContext");
             }
+            if (userContext.userId > 0)
+            {
+                await GetNotifications();
+            }
             StateHasChanged();
         }
+    }
+
+    public async Task GetNotifications()
+    {
+        notifications = await blogService.GetNotificationsForUser(userContext.userId);
     }
 
     public async Task LogOut()
     {
         await localStorage.RemoveItemAsync("userContext");
-        navManager.NavigateTo("/",forceLoad: true);
+        navManager.NavigateTo("/", forceLoad: true);
     }
 
     public void ChangePassword()

@@ -75,8 +75,9 @@
                         <div>
                             @if(userContext.userRoleId == true || userContext.userId == blog.userId)
                             {
-                                <RadzenButton Icon="edit" Title="Edit" @onclick:stopPropagation="true" Click="@(()=> UpdateHandler(blog))" Style="font-weight: 400;" />
-                                <RadzenButton Icon="delete" Title="Edit" @onclick:stopPropagation="true" Click="@(()=> DeleteHandler(blog))" Style="font-weight: 400;" />
+                                <RadzenIcon Icon="edit" Title="Edit" @onclick="@(()=> UpdateHandler(blog))" Style="font-weight: 400; cursor:pointer;">
+                                </RadzenIcon>
+                                <RadzenIcon Icon="delete" Title="Edit" @onclick="@(()=> DeleteHandler(blog))" Style="font-weight: 400; cursor:pointer;" />
                             }
                         </div>
                     </div>

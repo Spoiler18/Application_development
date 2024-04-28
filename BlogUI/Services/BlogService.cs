@@ -46,6 +46,20 @@ namespace BlogUI.Services
             }
         }
 
+        public async Task<IEnumerable<Notifications>> GetNotificationsForUser(int userId)
+        {
+            var requestUrl = configuration["APIBaseUrl"] + "Blog/GetUserNotifications/" + userId;
+            var responseStream = await apiService.SendAsync(requestUrl, true);
+            if (responseStream != null)
+            {
+                return await JsonSerializer.DeserializeAsync<IEnumerable<Notifications>>(responseStream);
+            }
+            else
+            {
+                return null;
+            }
+        }
+
         public async Task<Blog> GetBlogDetail(int? id)
         {
             var requestUrl = configuration["APIBaseUrl"] + $"Blog/GetBlogDetail/{id}" ;
