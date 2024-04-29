@@ -3,6 +3,7 @@ using System.Text.Json;
 using BlogUI.Models;
 using BlogUI.Extensions;
 using System.Text;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace BlogUI.Services
 {
@@ -63,6 +64,62 @@ namespace BlogUI.Services
         public async Task<Blog> GetBlogDetail(int? id)
         {
             var requestUrl = configuration["APIBaseUrl"] + $"Blog/GetBlogDetail/{id}" ;
+            var responseStream = await apiService.SendAsync(requestUrl, true);
+            if (responseStream != null)
+            {
+                return await JsonSerializer.DeserializeAsync<Blog>(responseStream);
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+        public async Task<List<Blog>> GetTopBlogs(bool alltime, DateTime? fromDate, DateTime? toDate)
+        {
+            var requestUrl = configuration["APIBaseUrl"] + $"Blog/GetTopBlogs/{alltime}/{fromDate:yyyy-MM-dd}/{toDate:yyyy-MM-dd}";
+            var responseStream = await apiService.SendAsync(requestUrl, true);
+            if (responseStream != null)
+            {
+                return await JsonSerializer.DeserializeAsync<List<Blog>>(responseStream);
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+        public async Task<List<PopularUsers>> GetTopBloggers(bool alltime, DateTime? fromDate, DateTime? toDate)
+        {
+            var requestUrl = configuration["APIBaseUrl"] + $"Blog/GetTopBloggers/{alltime}/{fromDate:yyyy-MM-dd}/{toDate:yyyy-MM-dd}";
+            var responseStream = await apiService.SendAsync(requestUrl, true);
+            if (responseStream != null)
+            {
+                return await JsonSerializer.DeserializeAsync<List<PopularUsers>>(responseStream);
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+        public async Task<List<Blog>> GetBlogSummary(bool alltime, DateTime? fromDate, DateTime? toDate)
+        {
+            var requestUrl = configuration["APIBaseUrl"] + $"Blog/GetBlogSummary/{alltime}/{fromDate:yyyy-MM-dd}/{toDate:yyyy-MM-dd}";
+            var responseStream = await apiService.SendAsync(requestUrl, true);
+            if (responseStream != null)
+            {
+                return await JsonSerializer.DeserializeAsync<List<Blog>>(responseStream);
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+        public async Task<Blog> GetBlogDetailPerodically(int? blogId,bool alltime, DateTime? fromDate, DateTime? toDate)
+        {
+            var requestUrl = configuration["APIBaseUrl"] + $"Blog/GetBlogDetailPeriodically/{blogId}/{alltime}/{fromDate:yyyy-MM-dd}/{toDate:yyyy-MM-dd}";
             var responseStream = await apiService.SendAsync(requestUrl, true);
             if (responseStream != null)
             {

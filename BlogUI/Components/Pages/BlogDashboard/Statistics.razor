@@ -1,0 +1,291 @@
+﻿@page "/BlogDashboard/Statistics"
+
+@using System.Globalization
+@using System.Linq
+@using Radzen.Blazor
+@using BlogUI.Models
+@using BlogUI.Services
+@using Blazored.LocalStorage;
+
+@inject BlogService blogService
+@inject NavigationManager navigationManager
+@inject Common common
+@inject ILocalStorageService localStorage
+
+<style>
+    .vertical-bar {
+        border-left: 1px solid #000;
+        height: auto; /* Ensure vertical bar stretches to full height */
+    }
+</style>
+
+<h3>Statistics</h3>
+
+<RadzenTabs SelectedIndexChanged="@(arg => OnTabChange(arg))">
+    <Tabs>
+        <RadzenTabsItem Text="All Time">
+            <div class="container-fluid">
+                <div class="row">
+                    <!-- Left side content -->
+                    <div class="col-md-8">
+                        <div class="row">
+                            <div class="col-md-12 p-4">
+                                <ul class="list-group">
+                                    @if (blogsAddedAllTime.Count() > 0)
+                                    {
+                                        @foreach (var blog in blogsAddedAllTime)
+                                        {
+                                            <li class="list-group-item" @onclick="() => ShowBlogDetails(blog.blogId)" style="cursor: pointer;">@blog.blogTitle</li>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <li class="list-group-item">No blogs added</li>
+                                    }
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Vertical bar -->
+                    <div class="col-md-1 vertical-bar"></div>
+                    <!-- Right side content -->
+                    <div class="col-md-3">
+                        <div>
+                            <h4>Top 10 Most Popular</h4>
+                            <h5>Blogs:</h5>
+                            <ul>
+                                @if (topBlogsAllTime.Count() > 0)
+                                {
+                                    @foreach (var blog in topBlogsAllTime)
+                                    {
+                                        <li>
+                                            <a href="@($"blogDetail?id={blog.blogId}")">@blog.blogTitle</a>
+                                        </li>
+                                    }
+                                }
+                            </ul>
+
+                            <h5>Bloggers:</h5>
+                            <ul>
+                                @if (topBloggersAllTime.Count() > 0)
+                                {
+                                    @foreach (var blog in topBloggersAllTime)
+                                    {
+                                        <li>@blog.userName</li>
+                                    }
+                                }
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </RadzenTabsItem>
+
+        <RadzenTabsItem Text="Time Specific">
+            <div class="row">
+                <div class="col-md-3" style="width : 200px;">
+                    <RadzenDropDown Value="selectedMonth" Data="@monthOptions" TextProperty="Name" ValueProperty="Id" TValue="int" ValueChanged="@((int newValue) => OnMonthSelected(newValue))" Style="width: 100%;">
+                    </RadzenDropDown>
+                </div>
+                <div class="col-md-3" style="width : 200px;">
+                    <RadzenDatePicker @bind-Value="fromDate" DateFormat="dd/MM/yyyy" />
+                </div>
+                <div class="col-md-3" style="width : 200px;">
+                    <RadzenDatePicker @bind-Value="toDate" DateFormat="dd/MM/yyyy" />
+                </div>
+                <div class="col-md-3">
+                    <button class="btn btn-primary" @onclick="Search">Search</button>
+                </div>
+            </div>
+            <div class="container-fluid">
+                <div class="row">
+                    <!-- Left side content -->
+                    <div class="col-md-8">
+                        <div class="row">
+                            <div class="col-md-12 p-4">
+                                <ul class="list-group">
+                                    @if (blogsAddedTimeSpecific.Count() > 0)
+                                    {
+                                        @foreach (var blog in blogsAddedTimeSpecific)
+                                        {
+                                            <li class="list-group-item" @onclick="() => ShowBlogDetails(blog.blogId)" style="cursor: pointer;">@blog.blogTitle</li>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <li class="list-group-item">No blogs added</li>
+                                    }
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Vertical bar -->
+                    <div class="col-md-1 vertical-bar"></div>
+                    <!-- Right side content -->
+                    <div class="col-md-3">
+                        <div>
+                            <h4>Top 10 Most Popular</h4>
+                            <h6>From : @fromDate?.ToString("dd/MM/yyyy")</h6>
+                            <h6>To : @toDate?.ToString("dd/MM/yyyy")</h6>
+                            <h5>Blogs:</h5>
+                            <ul>
+                                @if (topBlogsTimeSpecific.Count() > 0)
+                                {
+                                    @foreach (var blog in topBlogsTimeSpecific)
+                                    {
+                                        <li>
+                                            <a href="@($"blogDetail?id={blog.blogId}")">@blog.blogTitle</a>
+                                        </li>
+                                    }
+                                }
+                            </ul>
+
+                            <h5>Bloggers:</h5>
+                            <ul>
+                                @if (topBloggersTimeSpecific.Count() > 0)
+                                {
+                                    @foreach (var blog in topBloggersTimeSpecific)
+                                    {
+                                        <li>@blog.userName</li>
+                                    }
+                                }
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </RadzenTabsItem>
+    </Tabs>
+</RadzenTabs>
+
+@code {
+    [CascadingParameter] public IModalService Modal { get; set; } = default!;
+
+    private int selectedTabIndex = 0;
+    public List<Blog> topBlogsAllTime = new List<Blog>();
+    public List<Blog> blogsAddedAllTime = new List<Blog>();
+    public List<PopularUsers> topBloggersAllTime = new List<PopularUsers>();
+
+    public List<Blog> topBlogsTimeSpecific = new List<Blog>();
+    public List<Blog> blogsAddedTimeSpecific = new List<Blog>();
+    public List<PopularUsers> topBloggersTimeSpecific = new List<PopularUsers>();
+
+    private UserContext userContext = new UserContext();
+
+    private int selectedMonth = DateTime.Now.Month;
+    private List<Month> monthOptions;
+    private DateTime? fromDate = DateTime.Now;
+    private DateTime? toDate = DateTime.Now;
+
+    public class Month
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+    }
+
+    string GetEnglishMonthName(int month)
+    {
+        switch (month)
+        {
+            case 1: return "January";
+            case 2: return "February";
+            case 3: return "March";
+            case 4: return "April";
+            case 5: return "May";
+            case 6: return "June";
+            case 7: return "July";
+            case 8: return "August";
+            case 9: return "September";
+            case 10: return "October";
+            case 11: return "November";
+            case 12: return "December";
+            default: return "";
+        }
+    }
+
+    private void ShowBlogDetails(int blogId)
+    {
+        var allTime = true;
+
+        if(selectedTabIndex > 0)
+        {
+            allTime = false;
+        }
+
+        var parameters = new ModalParameters()
+            .Add(nameof(BlogUI.Components.Pages.BlogDashboard.Modals.BlogStatistics.Id), blogId)
+            .Add(nameof(BlogUI.Components.Pages.BlogDashboard.Modals.BlogStatistics.allTime), allTime)
+            .Add(nameof(BlogUI.Components.Pages.BlogDashboard.Modals.BlogStatistics.fromDate), fromDate)
+            .Add(nameof(BlogUI.Components.Pages.BlogDashboard.Modals.BlogStatistics.toDate), toDate);
+
+        var options = new ModalOptions()
+            {
+                Size = ModalSize.Large
+            };
+
+        Modal.Show<BlogUI.Components.Pages.BlogDashboard.Modals.BlogStatistics>("Comments and Reactions by Month", parameters, options);
+    }
+
+    private void OnTabChange(int index)
+    {
+        selectedTabIndex = index;
+    }
+
+    protected override void OnInitialized()
+    {
+        fromDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+        toDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.DaysInMonth(DateTime.Now.Year, DateTime.Now.Month));
+        monthOptions = Enumerable.Range(1, 12)
+            .Select(i => new Month { Id = i - 1, Name = GetEnglishMonthName(i) })
+            .ToList();
+    }
+
+    private void OnMonthSelected(int selectedMonthIndex)
+    {
+        DateTime firstDayOfMonth = new DateTime(DateTime.Now.Year, selectedMonthIndex + 1, 1);
+        DateTime lastDayOfMonth = firstDayOfMonth.AddMonths(1).AddDays(-1);
+        fromDate = firstDayOfMonth;
+        toDate = lastDayOfMonth;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            userContext = await common.GetUserContext();
+            if (userContext.isDeactivated == true)
+            {
+                await localStorage.RemoveItemAsync("userContext");
+                navigationManager.NavigateTo("/", forceLoad: true);
+            }
+
+            await GetTopBlogs();
+            await GetTopBloggers();
+            await GetBlogDescription();
+            StateHasChanged();
+        }
+    }
+
+    private async Task GetTopBlogs()
+    {
+        topBlogsAllTime = await blogService.GetTopBlogs(true, fromDate, toDate);
+    }
+
+    private async Task GetTopBloggers()
+    {
+        topBloggersAllTime = await blogService.GetTopBloggers(true, fromDate, toDate);
+    }
+
+    private async Task GetBlogDescription()
+    {
+        blogsAddedAllTime = await blogService.GetBlogSummary(true, fromDate, toDate);
+    }
+
+    private async Task Search()
+    {
+        topBlogsTimeSpecific = await blogService.GetTopBlogs(false, fromDate, toDate);
+        topBloggersTimeSpecific = await blogService.GetTopBloggers(false, fromDate, toDate);
+        blogsAddedTimeSpecific = await blogService.GetBlogSummary(false, fromDate, toDate);
+        StateHasChanged();
+    }
+}

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc.RazorPages;
+﻿using BlazorBootstrap;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace BlogUI.Models
 {
@@ -16,6 +17,13 @@ namespace BlogUI.Models
         public IEnumerable<BlogImage>? blogImages { get; set; }
         public IEnumerable<DetailedReaction>? blogReactions { get; set; }
         public IEnumerable<DetailedComment>? blogComments { get; set; }
+    }
+
+    public class PopularUsers
+    {
+        public int? userId { get; set; }
+        public int? totalPopularity { get; set; }
+        public string? userName { get; set; }
     }
 
     public class BlogImage 
@@ -41,6 +49,7 @@ namespace BlogUI.Models
         public int? blogId { get; set; }
         public int? userReaction { get; set; }
         public string? userReactionFullName { get; set; }
+        public DateTime? createdOn { get; set; }
     }
 
     public class DetailedComment
@@ -52,6 +61,7 @@ namespace BlogUI.Models
         public bool? isDeleted { get; set; }
         public int? replyToCommentId { get; set; }
         public string? userCommentFullName { get; set; }
+        public DateTime? createdOn { get; set; }
         public IEnumerable<DetailedCommentReaction> commentReactions { get; set; }
     }
 

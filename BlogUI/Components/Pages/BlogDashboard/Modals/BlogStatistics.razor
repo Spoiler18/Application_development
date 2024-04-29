@@ -1,0 +1,125 @@
+﻿@page "/blogDashboard/Modals/blogStatistics"
+
+@using BlogUI.Services;
+@using BlogUI.Models;
+@using BlogUI.Enums;
+
+@inject BlogService blogService
+@inject NavigationManager NavManager
+@inject Common common
+@inject ReactionCommentService reactionCommentService
+
+@using Radzen.Blazor
+
+
+@if (monthlyData != null && monthlyData.Any())
+{
+    <RadzenGrid Data="@monthlyData" TItem="MonthlyDataItem" PageSize="10">
+        <Columns>
+            <RadzenGridColumn TItem="MonthlyDataItem" Property="Month" Title="Month" Width="120px" />
+            <RadzenGridColumn TItem="MonthlyDataItem" Property="CommentCount" Title="Comment" Width="100px" />
+
+            @foreach (var reactionType in Enum.GetValues(typeof(Reactions)).Cast<Reactions>())
+            {
+                <RadzenGridColumn TItem="MonthlyDataItem" Title="@reactionType.ToString()" Width="100px">
+                    <Template Context="monthData">
+                        @((monthData.ReactionCounts.ContainsKey(reactionType)) ? monthData.ReactionCounts[reactionType] : 0)
+                    </Template>
+                </RadzenGridColumn>
+            }
+        </Columns>
+    </RadzenGrid>
+}
+else
+{
+    <p>No data available</p>
+} 
+
+
+@code {
+    [Parameter] public int? Id { get; set; }
+    [Parameter] public bool allTime { get; set; }
+    [Parameter] public DateTime? fromDate { get; set; }
+    [Parameter] public DateTime? toDate { get; set; }
+
+    private List<MonthlyDataItem> monthlyData;
+    private Blog? blogDetail { get; set; }
+    private UserContext userContext = new UserContext();
+
+    public class MonthlyDataItem
+    {
+        public string Month { get; set; }
+        public int CommentCount { get; set; }
+        public Dictionary<Reactions, int> ReactionCounts { get; set; } = new Dictionary<Reactions, int>();
+    }
+
+    private List<MonthlyDataItem> AggregateByMonth(IEnumerable<DetailedReaction> reactions, IEnumerable<DetailedComment> comments)
+    {
+        var monthlyData = new List<MonthlyDataItem>();
+
+        // Group reactions and comments by month
+        var groupedByMonth = reactions
+            .Concat(comments.Select(comment => new DetailedReaction
+                {
+                    createdOn = comment.createdOn,
+                    userReaction = 0 // Assuming 0 indicates a comment
+                }))
+            .GroupBy(item => new { Month = item.createdOn?.ToString("MMMM yyyy") });
+
+        // Iterate over each group
+        foreach (var group in groupedByMonth)
+        {
+            var monthData = new MonthlyDataItem
+                {
+                    Month = group.Key.Month,
+                    CommentCount = group.Count(item => item.userReaction == 0), // Count comments
+                    ReactionCounts = new Dictionary<Reactions, int>()
+                };
+
+            // Initialize reaction counts dictionary with zero counts for all reaction types
+            foreach (Reactions reactionType in Enum.GetValues(typeof(Reactions)))
+            {
+                monthData.ReactionCounts[reactionType] = 0;
+            }
+
+            // Update reaction counts
+            foreach (var item in group)
+            {
+                if (item.userReaction != 0) // Exclude comments
+                {
+                    if (Enum.IsDefined(typeof(Reactions), item.userReaction))
+                    {
+                        monthData.ReactionCounts[(Reactions)item.userReaction]++;
+                    }
+                }
+            }
+
+            monthlyData.Add(monthData);
+        }
+
+        return monthlyData;
+    }
+
+
+
+    protected override async Task OnInitializedAsync()
+    {
+
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            userContext = await common.GetUserContext();
+            await this.GetBlogStatistics();
+            StateHasChanged();
+        }
+    }
+
+    private async Task GetBlogStatistics()
+    {
+        blogDetail = await blogService.GetBlogDetailPerodically(Id,true,fromDate,toDate);
+        monthlyData = AggregateByMonth(blogDetail.blogReactions, blogDetail.blogComments);
+    }
+}
