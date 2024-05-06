@@ -137,6 +137,12 @@
     {
         if(isCommentLikeComponent != true)
         {
+            if (commentReactions?.Count() > 0)
+            {
+                totalReaction = commentReactions.Count();
+                userReaction = commentReactions.Where(item => item.userId == userContext.userId).Select(item => (int)item.userReaction).FirstOrDefault();
+                commentReactionId = commentReactions.Where(item => item.userId == userContext.userId).Select(item => item.commentReactionId).FirstOrDefault();
+            }
             if (userReaction != id)
             {
                 userReaction = id;
@@ -155,6 +161,12 @@
         }
         else
         {
+            if (blogReactions?.Count() > 0)
+            {
+                totalReaction = blogReactions.Count();
+                userReaction = blogReactions.Where(item => item.userId == userContext.userId).Select(item => (int)item.userReaction).FirstOrDefault();
+                ReactionId = blogReactions.Where(item => item.userId == userContext.userId).Select(item => item.reactionId).FirstOrDefault();
+            }
             if (userReaction != id)
             {
                 userReaction = id;
